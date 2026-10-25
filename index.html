@@ -180,6 +180,9 @@ html.trk #face::before,html.trk #face::after,html.trk #faceTag{display:none}
 .base{fill:none;stroke:var(--dim);stroke-width:1}
 .chipbox{fill:none;stroke:var(--ink);stroke-width:1.5}
 .chiptxt{font-family:var(--mono);font-size:11px;fill:var(--ink)}
+.limen-design{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px;margin-top:clamp(28px,4vw,44px)}
+.limen-design .ph{aspect-ratio:1.15}
+.limen-design .ph img{object-fit:contain;padding:12px}
 
 /* herald */
 .screen{border:1px solid var(--line);background:var(--surface);padding:10px}
@@ -443,6 +446,11 @@ footer{padding-block:30px 90px;color:var(--muted)}
       <p>LIMEN is a wearable that predicts panic attacks before they happen. The LSTM reached 97% validation accuracy. The hard part was running it in real time on an nRF5340: quantized to int8, with an IMU filter against false alarms.</p>
       <p>On-device by design: someone seconds from a panic attack can't wait for a network round-trip, and their data stays on their wrist.</p>
     </div>
+  </div>
+  <div class="limen-design subj" data-tag="LIMEN · wearable concepts">
+    <figure class="ph"><img src="limen-band.png" alt="Concept LIMEN: bracciale largo in metallo con sensori e pulsanti integrati" width="535" height="714" loading="lazy" decoding="async"><span class="tag">wide band</span></figure>
+    <figure class="ph"><img src="limen-bracelet.png" alt="Concept LIMEN: bracciale ergonomico aperto con sensori integrati sul lato interno" width="843" height="768" loading="lazy" decoding="async"><span class="tag">ergonomic bracelet</span></figure>
+    <figure class="ph"><img src="limen-ring.png" alt="Concept LIMEN: bracciale sottile con sensori integrati" width="408" height="285" loading="lazy" decoding="async"><span class="tag">slim band</span></figure>
   </div>
   <div class="limen-more">
     <figure class="ph press" style="--ar:0.789"><img src="limen-press.jpg" alt="Il Giornale di Vicenza, 3 June 2026, Economia section: article on the 24-hour hackathon at Elevator Innovation Hub, with a photo of the winning LIMEN team" width="946" height="1199" loading="lazy" decoding="async"><span class="tag">press · Il Giornale di Vicenza · 3 Jun 2026</span></figure>
