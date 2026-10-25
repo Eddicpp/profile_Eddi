@@ -1,0 +1,785 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Eduardo Pane</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Eduardo Pane, Computer Vision Engineer. M.Sc. AI at the University of Padova, part-time CV engineer at FlexSight, incoming ZEISS intern.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a camera "locks on" to one subject per chapter. One detection box travels from subject to subject; a fixed HUD keeps tracking label, year and frame count. */
+:root{
+  /* single committed look: black + signal orange */
+  --bg:#0B0B0C; --surface:#151413; --ink:#F2EEE9; --muted:#A8A198; --line:#2E2A26;
+  --box:#FF7A1A; --dim:#24211E; --onbox:#0B0B0C;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --s1:1.25rem; --s2:1.75rem; --s3:clamp(2rem,5vw,3.4rem); --s4:clamp(3rem,9vw,6.4rem);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.6;overflow-x:hidden;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:20;background:var(--bg)}
+a{color:inherit}
+a:focus-visible,button:focus-visible,video:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--box);outline-offset:3px}
+.skip{position:absolute;left:16px;top:-60px;z-index:30;background:var(--box);color:var(--onbox);padding:8px 12px;font-family:var(--mono);font-size:.85rem}
+.skip:focus{top:calc(10px + env(safe-area-inset-top,0px))}
+.wrap{max-width:1080px;margin:0 auto}
+.mono{font-family:var(--mono);font-size:.8rem;letter-spacing:.04em}
+h1,h2,h3{text-wrap:balance}
+h2{font-family:var(--display);font-weight:700;font-size:var(--s3);line-height:1.02;letter-spacing:-.02em;margin:0 0 18px;max-width:18ch}
+.kicker{color:var(--box);display:block;margin-bottom:10px}
+p{max-width:60ch}
+.muted{color:var(--muted)}
+
+/* HUD + progress + jump link */
+.hud,.progress{display:none!important}
+html.js .hud{display:flex!important}html.js .progress{display:block!important}
+.hud{position:fixed;z-index:15;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);padding:6px 12px;font-family:var(--mono);font-size:.75rem}
+.hud .dot{width:8px;height:8px;background:var(--box);border-radius:50%;animation:rec 1.6s infinite}
+@keyframes rec{50%{opacity:.25}}
+.hud b{color:var(--box);font-weight:500}
+@media (max-width:480px){.hud{gap:10px;padding:4px 10px}.hud #hudYear{display:none}}
+/* entry intro: camera boot, lock-on, pixel wave reveal */
+.intro{display:none}
+html.intro-on .intro{display:flex}
+html.intro-on body{overflow:hidden}
+.intro{position:fixed;inset:0;z-index:40;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;
+  padding:max(16px,env(safe-area-inset-left,0px));color:var(--ink)}
+.intro .vf{position:absolute;width:34px;height:34px;border:2px solid var(--box);animation:vfIn .5s cubic-bezier(.2,.8,.2,1) both}
+.intro .tl{top:calc(22px + env(safe-area-inset-top,0px));left:22px;border-right:0;border-bottom:0}
+.intro .tr{top:calc(22px + env(safe-area-inset-top,0px));right:22px;border-left:0;border-bottom:0}
+.intro .bl{bottom:calc(22px + env(safe-area-inset-bottom,0px));left:22px;border-right:0;border-top:0}
+.intro .br{bottom:calc(22px + env(safe-area-inset-bottom,0px));right:22px;border-left:0;border-top:0}
+@keyframes vfIn{from{opacity:0;transform:scale(2.2)}to{opacity:1;transform:none}}
+.iscan{position:absolute;left:0;right:0;top:0;height:2px;background:var(--box);box-shadow:0 0 18px var(--box);opacity:.55;animation:iscan 1.4s linear infinite}
+@keyframes iscan{from{top:0}to{top:100%}}
+.irec{position:absolute;top:calc(30px + env(safe-area-inset-top,0px));left:70px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.irec i{width:8px;height:8px;border-radius:50%;background:var(--box);animation:rec 1s infinite}
+.irec b{color:var(--box);font-weight:500;font-variant-numeric:tabular-nums}
+.iname{position:relative;font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,10vw,6.4rem);line-height:.9;letter-spacing:-.035em;
+  padding:clamp(12px,2.6vw,24px) clamp(16px,3.2vw,32px);opacity:0;transition:opacity .25s}
+.iname.on{opacity:1}
+.iname .lb{position:absolute;inset:0;border:1.5px dashed var(--box);transform:scale(1.9);opacity:.6;transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .55s}
+.iname.on .lb{transform:scale(1.12)}
+.iname.locked .lb{transform:none;opacity:1;border-style:solid}
+.iname .lb::before,.iname .lb::after{content:"";position:absolute;width:11px;height:11px;border:2px solid var(--box);background:var(--bg)}
+.iname .lb::before{top:-6px;left:-6px}.iname .lb::after{bottom:-6px;right:-6px}
+.iname .tag{transition:background .2s}
+.boot{position:absolute;left:clamp(22px,5vw,70px);bottom:calc(70px + env(safe-area-inset-bottom,0px));margin:0;color:var(--muted);font-size:.78rem;line-height:1.7;white-space:pre;max-width:calc(100vw - 44px);overflow:hidden}
+.iskip{position:absolute;right:70px;bottom:calc(30px + env(safe-area-inset-bottom,0px));background:none;border:1px solid var(--line);color:var(--muted);padding:6px 10px;cursor:pointer}
+.iskip:hover{border-color:var(--box);color:var(--ink)}
+@media (max-width:600px){.irec{left:64px}.iskip{right:22px;bottom:calc(70px + env(safe-area-inset-bottom,0px))}.boot{bottom:calc(120px + env(safe-area-inset-bottom,0px))}}
+.wave{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:13;pointer-events:none;display:none}
+.progress{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);height:3px;z-index:21}
+.progress span{display:block;height:100%;background:var(--box);transform-origin:0 50%;transform:scaleX(0)}
+.jump{position:fixed;z-index:16;top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));
+  font-family:var(--mono);font-size:.78rem;text-decoration:none;background:var(--surface);border:1px solid var(--line);padding:6px 10px}
+.jump:hover{border-color:var(--box)}
+@media (prefers-reduced-motion: reduce){.hud .dot{animation:none}}
+
+/* lock-on box (static, no-JS and reduced-motion version) */
+.lock{position:relative;display:inline-block;padding:clamp(10px,2.4vw,22px) clamp(14px,3vw,30px)}
+.lock .lb{position:absolute;inset:0;border:1.5px solid var(--box);pointer-events:none}
+.lock .lb::before,.lock .lb::after,.tbox::before,.tbox::after{content:"";position:absolute;width:11px;height:11px;border:2px solid var(--box);background:var(--bg)}
+.lock .lb::before,.tbox::before{top:-6px;left:-6px}.lock .lb::after,.tbox::after{bottom:-6px;right:-6px}
+.tag{position:absolute;left:-1.5px;top:-1.5px;transform:translateY(-100%);background:var(--box);color:var(--onbox);font-family:var(--mono);font-size:.75rem;padding:2px 8px;white-space:nowrap}
+
+/* travelling tracker: one box handed off between chapter subjects (JS + motion only) */
+.tracker{position:fixed;left:0;top:0;width:10px;height:10px;z-index:12;pointer-events:none;display:none;will-change:transform}
+.tbox{position:absolute;inset:0;border:1.5px solid var(--box)}
+.tracker.seek .tbox{border-style:dashed;opacity:.6}
+.tscan{position:absolute;left:0;right:0;top:0;height:2px;background:var(--box);opacity:0;box-shadow:0 0 12px var(--box)}
+html.trk .tracker{display:block}
+html.trk .subj>.lb,html.trk .subj>.tag{visibility:hidden}
+html.trk #face{border-color:transparent}
+html.trk #face::before,html.trk #face::after,html.trk #faceTag{display:none}
+
+/* chapters */
+.ch{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding-block:clamp(70px,10vw,120px)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,64px);align-items:center}
+.split>*{min-width:0}
+@media (max-width:780px){.split{grid-template-columns:1fr}.ch{min-height:auto}}
+.big{font-family:var(--display);font-weight:800;font-size:clamp(3rem,9vw,6rem);line-height:.9;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.facts{display:grid;gap:12px;margin-top:22px}
+.fact{display:grid;grid-template-columns:7rem 1fr;gap:12px;border-top:1px solid var(--line);padding-top:10px;align-items:baseline}
+.fact b{font-family:var(--display);font-size:var(--s2);line-height:1;font-variant-numeric:tabular-nums}
+.fact span{color:var(--muted);font-size:.92rem}
+
+/* hero */
+.hero{min-height:auto;padding-block:84px 48px}
+.hero h1{font-family:var(--display);font-weight:800;font-size:var(--s4);line-height:.9;letter-spacing:-.035em;margin:0}
+.role{font-family:var(--display);font-weight:700;font-size:clamp(1.15rem,2.2vw,1.5rem);line-height:1.2;margin:26px 0 0;max-width:30ch}
+.lede{font-size:1.06rem;max-width:46ch;margin:12px 0 0;color:var(--muted)}
+.proof{list-style:none;margin:24px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;max-width:520px}
+.proof li{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.proof b{font-family:var(--display);font-weight:800;font-size:clamp(1.2rem,2.6vw,1.6rem);line-height:1.05;color:var(--box);font-variant-numeric:tabular-nums}
+.proof span{font-size:.85rem;color:var(--muted);line-height:1.35}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.btn{font-family:var(--mono);font-size:.85rem;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);padding:10px 14px;cursor:pointer}
+.btn:hover{border-color:var(--box)}
+.btn.primary{background:var(--box);color:var(--onbox);border-color:var(--box)}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(28px,5vw,60px);align-items:center}
+.hero-grid>*{min-width:0}
+@media (max-width:780px){.hero-grid{grid-template-columns:1fr}.portrait{max-width:420px}}
+.portrait{position:relative;margin:0;max-width:100%}
+.portrait img{display:block;width:100%;height:auto;max-width:100%}
+.portrait figcaption{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.face{position:absolute;left:43.5%;top:46.3%;width:12.7%;height:9.5%;border:1.5px solid var(--box)}
+.person{position:absolute;left:29.6%;top:42%;width:47%;height:57.6%;border:1px dashed var(--box);opacity:.75}
+.person .tag{top:auto;bottom:0;left:0;transform:none;font-size:.7rem}
+.shot{position:relative;overflow:hidden}
+.face::before,.face::after{content:"";position:absolute;width:10px;height:10px;border:2px solid var(--box);background:var(--bg)}
+.face::before{top:-6px;left:-6px}.face::after{bottom:-6px;right:-6px}
+.lm{position:absolute;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;background:var(--box);border-radius:50%}
+.scan{position:absolute;left:0;right:0;height:2px;background:var(--box);opacity:0;top:0}
+
+/* availability line */
+.avail{display:flex;align-items:baseline;gap:10px;margin:18px 0 0;color:var(--ink);font-size:.8rem;max-width:60ch}
+.avail i{flex:none;width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,.18);transform:translateY(-1px)}
+
+/* stack */
+.stack{display:grid;gap:10px;margin-top:clamp(32px,5vw,56px)}
+.srow{display:grid;grid-template-columns:9.5rem minmax(0,1fr);gap:12px;align-items:baseline;border-top:1px solid var(--line);padding-top:10px}
+.srow>.mono{color:var(--box)}
+.srow .chips{margin:0;padding:0}
+@media (max-width:520px){.srow{grid-template-columns:1fr;gap:6px}}
+
+/* certifications */
+.certs{display:grid;gap:14px;margin-top:clamp(32px,5vw,56px)}
+.card .more{margin-top:2px}
+.cert-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.cert{background:var(--surface);border:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:8px;min-width:0;transition:border-color .2s}
+.cert:hover{border-color:var(--box)}
+.cert>.mono{color:var(--box)}
+.cert h3{font-family:var(--display);font-weight:700;font-size:1.15rem;line-height:1.15;margin:0}
+.cert p{margin:0;color:var(--muted);font-size:.88rem;line-height:1.45}
+.cert .chips{margin-top:auto}
+.cert .more{margin-top:4px}
+@media (max-width:980px){.cert-list,.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.cert-list,.cards{grid-template-columns:1fr}}
+
+/* thesis: current role */
+.job{border:1px solid var(--box);background:var(--surface);padding:18px;display:grid;gap:12px;margin-top:24px}
+.job-logo{background:#fff;padding:10px 14px;justify-self:start;max-width:100%}
+.job-logo img{width:200px;max-width:100%;height:auto;display:block}
+.job p{margin:0;color:var(--muted)}
+.job b{color:var(--ink)}
+
+/* thesis: real detector output */
+.bp{display:grid;gap:12px;margin-top:clamp(28px,4vw,44px)}
+.bp .ph img{object-fit:contain;background:#fff}
+.bp-cap{margin:0;max-width:80ch}
+
+/* limen */
+.wrist{border:1px solid var(--line);background:var(--surface);padding:18px}
+.wrist svg{width:100%;height:auto;display:block}
+.ecg{fill:none;stroke:var(--box);stroke-width:2.2;stroke-linejoin:round}
+.base{fill:none;stroke:var(--dim);stroke-width:1}
+.chipbox{fill:none;stroke:var(--ink);stroke-width:1.5}
+.chiptxt{font-family:var(--mono);font-size:11px;fill:var(--ink)}
+
+/* herald */
+.screen{border:1px solid var(--line);background:var(--surface);padding:10px}
+.screen video{display:block;width:100%;height:auto;max-width:100%;background:var(--bg);object-fit:contain}
+.screen .cap{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-top:6px}
+.stages{display:grid;gap:8px;margin-top:20px}
+.stage{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:8px;font-family:var(--mono);font-size:.8rem;flex-wrap:wrap}
+.stage.on{color:var(--box)}
+.stage.on>span:first-child::before{content:"▸ "}
+
+/* projects */
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin-top:28px}
+.card{background:var(--surface);border:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3,.gt h3{font-family:var(--display);font-weight:700;font-size:var(--s1);margin:0;line-height:1.15}
+.card p,.gt p{margin:0;color:var(--muted);font-size:.95rem}
+.card .mono,.gt figcaption>.mono{color:var(--box)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px}
+.chips span{font-family:var(--mono);font-size:.75rem;border:1px solid var(--line);padding:2px 7px}
+@media (max-width:980px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.cards{grid-template-columns:1fr;gap:14px}}
+
+/* games: bento wall at true aspect ratios + numbered legend */
+.bento{display:grid;grid-template-columns:2.066fr 1fr;gap:16px;margin-top:28px}
+.bento>*{min-width:0}
+.bl{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-content:start}
+.bl .t1{grid-column:1/-1}
+.brow{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.gt{position:relative;margin:0;background:var(--bg);border:1px solid var(--line);overflow:hidden;transition:border-color .2s}
+.gt video{display:block;width:100%;height:auto;max-width:100%}
+.gt.tall video{height:100%;object-fit:cover}
+.gt .tag{left:0;top:0;transform:none;font-size:.72rem;z-index:1}
+.gt:hover,.gt.hi{border-color:var(--box)}
+.legend{list-style:none;margin:28px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px 28px}
+.legend li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;border-top:1px solid var(--line);padding-top:12px;transition:border-color .2s}
+.legend li:hover,.legend li.hi{border-top-color:var(--box)}
+.legend .n{color:var(--box);font-weight:500;padding-top:3px}
+.legend h3{font-family:var(--display);font-weight:700;font-size:var(--s1);margin:0;line-height:1.15}
+.legend h3 small{display:block;font-family:var(--mono);font-size:.72rem;font-weight:400;color:var(--box);letter-spacing:.04em;margin-bottom:2px}
+.legend p{margin:4px 0 0;color:var(--muted);font-size:.93rem}
+.legend .chips{margin-top:8px;padding-top:0}
+.more{color:var(--box);text-decoration:none}
+.more:hover{text-decoration:underline}
+@media (max-width:900px){.legend{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:780px){
+  .bento,.bl,.brow{grid-template-columns:1fr}
+  .gt.tall{max-width:300px;width:100%;justify-self:center}
+  .gt.tall video{height:auto}
+  .legend{grid-template-columns:1fr}
+}
+
+/* herald full video */
+.screen.wide{margin-top:clamp(24px,4vw,40px)}
+
+/* team photos: justified rows, every photo at its true ratio */
+.floor{display:grid;gap:16px;margin-top:clamp(32px,5vw,56px)}
+.frow{display:flex;gap:16px}
+.ph{position:relative;margin:0;flex:var(--ar) 1 0;min-width:0;aspect-ratio:var(--ar);max-width:100%;border:1px solid var(--line);overflow:hidden;background:var(--surface)}
+.ph img{display:block;width:100%;height:100%;object-fit:cover}
+.ph .tag{left:0;top:0;transform:none;font-size:.72rem;z-index:1;white-space:normal}
+.ph:hover{border-color:var(--box)}
+.yt{display:flex;flex-direction:column;justify-content:flex-end;gap:14px;padding:clamp(16px,3vw,28px);text-decoration:none;color:var(--ink);
+  background-color:var(--surface);background-image:linear-gradient(var(--dim) 1px,transparent 1px),linear-gradient(90deg,var(--dim) 1px,transparent 1px);background-size:24px 24px}
+.yt .play{position:absolute;left:50%;top:44%;width:76px;height:76px;margin:-38px 0 0 -38px;border:1.5px solid var(--box);background:var(--bg);transition:transform .2s}
+.yt .play::after{content:"";position:absolute;left:31px;top:24px;border-left:20px solid var(--box);border-top:14px solid transparent;border-bottom:14px solid transparent}
+.yt:hover .play{transform:scale(1.08)}
+.ytt{position:relative;display:grid;gap:2px}
+.ytt b{font-family:var(--display);font-size:var(--s1)}
+.ytt .mono{color:var(--box)}
+@media (max-width:780px){.frow{flex-direction:column}.ph{flex:none;width:100%}.ph[style*="0.6764"]{max-width:360px}.yt{aspect-ratio:auto;padding-top:128px}.yt .play{top:20px;margin-top:0;left:clamp(16px,3vw,28px);margin-left:0}}
+
+/* limen: press + fellowship */
+.limen-more{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:clamp(24px,4vw,48px);align-items:start;margin-top:clamp(32px,5vw,56px)}
+.ph.press{flex:none;width:100%}
+.lm-side{display:grid;gap:24px;min-width:0}
+.kick{border:1px solid var(--line);background:#000;padding:20px;display:grid;gap:14px}
+.kick img{width:180px;max-width:100%;height:auto;display:block}
+.kick p{margin:0;color:var(--muted)}
+.kick b{color:var(--ink)}
+.ph video{display:block;width:100%;height:100%;object-fit:contain;background:var(--bg)}
+.ytl{position:absolute;right:0;top:0;z-index:1;background:var(--surface);color:var(--box);border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:2px 8px;font-size:.72rem;text-decoration:none}
+.ytl:hover{background:var(--box);color:var(--onbox)}
+@media (max-width:780px){.limen-more{grid-template-columns:1fr}.ph.press{max-width:380px}}
+
+/* log */
+.log{list-style:none;margin:0;padding:0;position:relative}
+.log::before{content:"";position:absolute;left:4px;top:6px;bottom:6px;width:1.5px;background:var(--box)}
+.log li{position:relative;padding:0 0 20px 26px}
+.log li::before{content:"";position:absolute;left:0;top:.5em;width:10px;height:10px;background:var(--bg);border:2px solid var(--box)}
+.log b{display:block;font-weight:600}
+
+/* zeiss */
+.iris{position:relative;border:1.5px solid var(--box);background:var(--surface);padding:clamp(28px,6vw,64px)}
+.iris .big{color:var(--box)}
+.zrow{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:18px}
+
+/* contact */
+.contact{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.email{font-family:var(--mono);font-size:.95rem;user-select:all;background:var(--surface);border:1px solid var(--box);padding:10px 14px;overflow-wrap:anywhere}
+footer{padding-block:30px 90px;color:var(--muted)}
+</style>
+
+<script>
+(function(){var d=document.documentElement,on=false;
+  try{ on=!matchMedia('(prefers-reduced-motion: reduce)').matches && !location.hash && !sessionStorage.getItem('ep-intro'); }catch(e){ on=false; }
+  if(on) d.classList.add('intro-on');
+})();
+</script>
+<div class="intro" id="intro" aria-hidden="true">
+  <span class="vf tl"></span><span class="vf tr"></span><span class="vf bl"></span><span class="vf br"></span>
+  <span class="iscan"></span>
+  <span class="irec mono"><i></i>REC · <b id="iframe">f.0000</b></span>
+  <div class="iname" id="iname"><span class="lb"></span><span class="tag" id="itag">searching…</span>Eduardo<br>Pane</div>
+  <pre class="boot mono" id="boot"></pre>
+  <button type="button" class="iskip mono" id="iskip">skip ↵</button>
+</div>
+<script>
+(function(){
+  var d=document.documentElement; if(!d.classList.contains('intro-on')) return;
+  try{ sessionStorage.setItem('ep-intro','1'); }catch(e){}
+  var boot=document.getElementById('boot'), nm=document.getElementById('iname'), tag=document.getElementById('itag'), fr=document.getElementById('iframe');
+  var lines=['> camera.init()            ok','> sensor 1/1 · exposure    ok','> detector.load()          ok','> scanning frame…','> subject found · tracking'];
+  var timers=[], done=false, t0=Date.now();
+  function at(ms,fn){ timers.push(setTimeout(fn,ms)); }
+  var fi=setInterval(function(){ fr.textContent='f.'+String(Math.round((Date.now()-t0)/33)).padStart(4,'0'); },33);
+  lines.forEach(function(l,i){ at(120+i*230,function(){ boot.textContent+=(i?'\n':'')+l; }); });
+  at(980,function(){ nm.classList.add('on'); });
+  at(1500,function(){ tag.textContent='engineer · 0.97'; nm.classList.add('locked'); });
+  function finish(){
+    if(done) return; done=true; timers.forEach(clearTimeout); clearInterval(fi);
+    function reveal(){ d.classList.remove('intro-on'); document.dispatchEvent(new Event('intro:done')); }
+    if(window.__wave){ window.__wave(reveal); } else { var o=document.getElementById('intro'); o.style.transition='opacity .35s'; o.style.opacity='0'; setTimeout(reveal,360); }
+  }
+  window.__introFinish=finish;
+  at(2150,finish);
+  setTimeout(function(){ if(d.classList.contains('intro-on')){ done=false; finish(); } },4500); // safety net
+  document.getElementById('iskip').addEventListener('click',finish);
+  ['keydown','wheel','touchstart'].forEach(function(ev){ addEventListener(ev,function(){ if(!done) finish(); },{once:true,passive:true}); });
+})();
+</script>
+<a class="skip" href="#contact">Skip to contact</a>
+<div class="progress" aria-hidden="true"><span id="prog"></span></div>
+<canvas class="wave" id="wave" aria-hidden="true"></canvas>
+<div class="hud" aria-hidden="true"><span class="dot"></span><span>tracking: <b id="hudLabel">person</b></span><span id="hudYear">2004 →</span><span id="hudFrame">f.0001</span></div>
+<a class="jump" href="#contact">Contact ↓</a>
+<div class="tracker" id="tracker" aria-hidden="true"><div class="tbox" id="tbox"><span class="tag" id="trkTag">face · 0.99</span><span class="tscan" id="tscan"></span></div></div>
+
+<div class="wrap">
+
+<header class="hero ch" data-label="person" data-year="2004 →">
+  <div class="hero-grid">
+    <div>
+      <p class="mono muted" style="margin:0 0 30px">frame 0001 · Padova, IT</p>
+      <div><div class="lock" id="heroLock"><span class="lb"></span><span class="tag">engineer · 0.97</span><h1>Eduardo<br>Pane</h1></div></div>
+      <p class="role">Computer Vision Engineer · M.Sc. AI, University of Padova</p>
+      <p class="lede">I ship vision models where compute is scarce: detectors trained on synthetic data, int8 networks on microcontrollers, drone localization without GPS. Part-time CV engineer at FlexSight.</p>
+      <ul class="proof">
+        <li><b>0.934</b><span>mAP@50, thesis detector</span></li>
+        <li><b>97%</b><span>val. accuracy, int8 LSTM on nRF5340</span></li>
+        <li><b>12 min → 1–2 s</b><span>per frame, GPS-denied drone localization</span></li>
+        <li><b>ZEISS</b><span>internship at HQ, Mar–Aug 2027</span></li>
+      </ul>
+      <div class="links">
+        <a class="btn primary" href="Eduardo_Pane_CV.pdf" target="_blank" rel="noopener">CV (PDF) ↗</a>
+        <a class="btn" href="#contact">Contact</a>
+        <a class="btn" href="https://www.linkedin.com/in/eduardo-pane-467702293" target="_blank" rel="noopener">LinkedIn ↗</a>
+        <a class="btn" href="https://github.com/Eddicpp" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+      <p class="avail mono"><i></i>open to internships &amp; M.Sc. thesis from Sep 2027 · open to relocation · Italian (native), English (B2)</p>
+    </div>
+    <figure class="portrait" id="portrait">
+      <div class="shot"><img src="eduardo.jpg" alt="Eduardo Pane sitting on the mosaic bench at Park Güell, Barcelona, shading his eyes from the sun" width="880" height="1100" fetchpriority="high" decoding="async">
+      <div class="person" id="person"><span class="tag">person · 0.98</span></div>
+      <div class="face subj" id="face" data-tag="face · 0.99"><span class="tag" id="faceTag">face · 0.99</span><span class="scan" id="scan"></span></div>
+      <span class="lm" style="left:48.3%;top:51.6%"></span><span class="lm" style="left:52.2%;top:52.6%"></span><span class="lm" style="left:53.7%;top:53.7%"></span><span class="lm" style="left:52.7%;top:55.4%"></span></div>
+      <figcaption><span>subject: Eduardo, 21</span><span>M.Sc. AI · CV engineer</span></figcaption>
+    </figure>
+  </div>
+</header>
+
+<section class="ch" id="origin" data-label="student" data-year="2020–2026">
+  <div class="split">
+    <div>
+      <span class="kicker mono">chapter 1 · origin</span>
+      <h2>Olympiad finalist, then engineering at Padova</h2>
+      <p>Two years in a row (2020–2021) I reached the regional finals of the Italian Mathematical and Informatics Olympiads. Then Computer Engineering at the University of Padova, with most of my learning done on things built outside the exams: game agents, tiny models on microcontrollers, hackathon prototypes.</p>
+    </div>
+    <div>
+      <div class="lock subj" data-tag="B.Sc. · 108/110"><span class="lb"></span><span class="tag">B.Sc. final grade</span><div class="big" id="grade">108/110</div></div>
+      <div class="facts">
+        <div class="fact"><b>Jul 2026</b><span>B.Sc. Computer Engineering · Sep 2023 – Jul 2026</span></div>
+        <div class="fact"><b>Now</b><span>M.Sc. Computer Engineering, Artificial Intelligence · Sep 2026 – present</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="stack" id="stack">
+    <p class="mono muted" style="margin:0">stack</p>
+      <div class="srow"><span class="mono">Languages</span><div class="chips"><span>Python</span><span>C/C++</span><span>Java</span><span>SQL</span><span>TypeScript</span></div></div>
+      <div class="srow"><span class="mono">ML / DL</span><div class="chips"><span>PyTorch</span><span>TensorFlow</span><span>Keras</span><span>scikit-learn</span><span>XGBoost</span></div></div>
+      <div class="srow"><span class="mono">Computer vision</span><div class="chips"><span>OpenCV</span><span>YOLO</span><span>object detection</span><span>synthetic data generation</span><span>multi-camera systems</span></div></div>
+      <div class="srow"><span class="mono">Embedded ML</span><div class="chips"><span>TinyML</span><span>int8 quantization</span><span>nRF5340</span><span>edge AI deployment</span></div></div>
+      <div class="srow"><span class="mono">Other</span><div class="chips"><span>CrewAI</span><span>LLM orchestration</span><span>multi-agent systems</span><span>Git</span><span>Linux</span><span>Docker</span></div></div>
+  </div>
+  <div class="certs">
+    <p class="mono muted" style="margin:0">certifications · 4 · verifiable</p>
+    <ol class="cert-list">
+      <li class="cert"><span class="mono">Dec 2025</span><h3>Machine Learning Specialization</h3><p>Professional Certificate · 3 courses<br>DeepLearning.AI × Stanford Online</p><div class="chips"><span>supervised</span><span>advanced algorithms</span><span>unsupervised · RL</span></div><a class="more mono" href="https://www.deeplearning.ai/certificates/7d6dd583-4ebe-4b2a-86b6-543c7b251eb2" target="_blank" rel="noopener">verify ↗</a></li>
+      <li class="cert"><span class="mono">Mar 2026</span><h3>Deep Learning Specialization</h3><p>Professional Certificate · 5 courses<br>DeepLearning.AI</p><div class="chips"><span>CNNs</span><span>sequence models</span><span>optimization</span></div><a class="more mono" href="https://www.deeplearning.ai/certificates/94c0af63-eb54-4d42-808e-5dcf1d0f4d0c" target="_blank" rel="noopener">verify ↗</a></li>
+      <li class="cert"><span class="mono">Mar 2026</span><h3>NLP with Classification and Vector Spaces</h3><p>Course Certificate<br>DeepLearning.AI</p><div class="chips"><span>NLP</span><span>vector spaces</span></div><a class="more mono" href="https://www.deeplearning.ai/certificates/c82a187d-e410-4eae-9ede-d13b9abde98a" target="_blank" rel="noopener">verify ↗</a></li>
+      <li class="cert"><span class="mono">Jul 2026</span><h3>Agentic AI</h3><p>Course Certificate<br>DeepLearning.AI</p><div class="chips"><span>agents</span></div><a class="more mono" href="https://www.deeplearning.ai/certificates/b039c2c7-28d7-4aac-96c3-e9c828b0fec6" target="_blank" rel="noopener">verify ↗</a></li>
+    </ol>
+  </div>
+</section>
+
+<section class="ch" id="thesis" data-label="blueprint" data-year="2026">
+  <div class="split">
+    <div>
+      <span class="kicker mono">chapter 2 · thesis with FlexSight</span>
+      <h2>Synthetic data for classes the real data barely had</h2>
+      <p>Task: detect GD&amp;T annotations on scanned industrial blueprints, where some symbol classes appeared only a handful of times.</p>
+      <p>I built a generator for the missing data: 12 layout variants, exact bounding-box reprojection, and augmentation up to 10× for the rarest classes.</p>
+    </div>
+    <div>
+    <div class="facts" style="margin:0">
+      <div class="fact"><b>0.934</b><span>mAP@50, dimension detector</span></div>
+      <div class="fact"><b>0.852</b><span>mAP@50, symbol detector</span></div>
+      <div class="fact"><b>12</b><span>synthetic layout variants</span></div>
+      <div class="fact"><b>10×</b><span>max augmentation for the rarest classes</span></div>
+    </div>
+    <div class="job">
+      <span class="mono" style="color:var(--box)">Mar 2026 – present · part-time</span>
+      <div class="job-logo"><img src="flexsight.png" alt="FlexSight" width="448" height="95" loading="lazy"></div>
+      <p><b>Computer Vision Engineer, Consultant at FlexSight.</b> The thesis turned into a part-time role: I analyze blockers on open or stalled industrial vision projects, propose alternative approaches and prototype solutions.</p>
+    </div>
+    </div>
+  </div>
+  <div class="bp">
+    <div class="frow subj" data-tag="GD&amp;T detector · real scans">
+      <figure class="ph" style="--ar:0.7737"><img src="bp-goulds.jpg" alt="Detector output on a scanned pump diffuser drawing: boxes labelled diameter, surface_finish, radius, concentricity, symmetry and perpendicularity with confidence scores" width="800" height="1034" loading="lazy" decoding="async"><span class="tag">scan 01 · diffuser</span></figure>
+      <figure class="ph" style="--ar:1.4144"><img src="bp-sleeve.jpg" alt="Detector output on a photographed sleeve drawing: boxes labelled perpendicularity, surface_finish, concentricity, radius and diameter with confidence scores" width="1280" height="905" loading="lazy" decoding="async"><span class="tag">scan 02 · sleeve</span></figure>
+      <figure class="ph" style="--ar:0.7067"><img src="bp-sulzer.jpg" alt="Detector output on a hand-annotated balance drum liner drawing: boxes labelled diameter, total_runout, circular_runout, radius, perpendicularity and slope with confidence scores" width="800" height="1132" loading="lazy" decoding="async"><span class="tag">scan 03 · drum liner</span></figure>
+    </div>
+    <p class="mono muted bp-cap"><a class="more" href="https://github.com/Eddicpp/BlueprintCV" target="_blank" rel="noopener">BlueprintCV repo ↗</a> · Model output on real scanned drawings. Each box is a predicted GD&amp;T or dimension class with its confidence, including photos, skewed scans and handwritten notes.</p>
+  </div>
+</section>
+
+<section class="ch" id="limen" data-label="wearable" data-year="Mar 2026">
+  <div class="split">
+    <div class="wrist subj" data-tag="nRF5340 · int8 · 97%">
+      <svg viewBox="0 0 400 220" role="img" aria-label="Heart signal flowing into an nRF5340 microcontroller running an int8 LSTM">
+        <path class="base" d="M10 110 H300"/>
+        <path class="ecg" id="ecg" d="M10 110 H60 L70 100 L78 110 H96 L104 60 L112 160 L120 110 H160 L170 98 L178 110 H196 L204 55 L212 165 L220 110 H260 L270 100 L278 110 H300"/>
+        <rect class="chipbox" x="310" y="75" width="80" height="70" rx="4"/>
+        <text class="chiptxt" x="350" y="106" text-anchor="middle">nRF5340</text>
+        <text class="chiptxt" x="350" y="124" text-anchor="middle">int8 LSTM</text>
+        <text class="chiptxt" x="10" y="200">HRV · EDA · temperature → on-device, 0 cloud calls</text>
+      </svg>
+    </div>
+    <div>
+      <span class="kicker mono">chapter 3 · LIMEN · 1st place</span>
+      <h2>97% accuracy, on a microcontroller, no cloud</h2>
+      <p>LIMEN is a wearable that predicts panic attacks before they happen. The LSTM reached 97% validation accuracy. The hard part was running it in real time on an nRF5340: quantized to int8, with an IMU filter against false alarms.</p>
+      <p>On-device by design: someone seconds from a panic attack can't wait for a network round-trip, and their data stays on their wrist.</p>
+    </div>
+  </div>
+  <div class="limen-more">
+    <figure class="ph press" style="--ar:0.789"><img src="limen-press.jpg" alt="Il Giornale di Vicenza, 3 June 2026, Economia section: article on the 24-hour hackathon at Elevator Innovation Hub, with a photo of the winning LIMEN team" width="946" height="1199" loading="lazy" decoding="async"><span class="tag">press · Il Giornale di Vicenza · 3 Jun 2026</span></figure>
+    <div class="lm-side">
+      <div class="facts" style="margin-top:0">
+        <div class="fact"><b>1st</b><span>overall, 24-hour hackathon at Elevator Innovation Hub, Vicenza</span></div>
+        <div class="fact"><b>2nd</b><span>in the social challenge at the same event</span></div>
+        <div class="fact"><b>~40</b><span>young developers, designers and economists competing</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="herald" data-label="drone" data-year="May–Sep 2026">
+  <div class="split">
+    <div>
+      <span class="kicker mono">chapter 4 · HERALD · CTO · May – Sep 2026</span>
+      <h2>Drone localization without GPS, <span style="white-space:nowrap">1–2 s</span> per frame</h2>
+      <p>HERALD estimates a drone's position by matching its camera feed against a satellite mosaic (132 tiles, 3072×2816 px, 0.73 m per pixel). Brute force meant 9,628 windows and ~12 minutes per frame. Three stages cut it down.</p>
+    </div>
+    <div>
+      <div class="stages" id="stages">
+        <div class="stage" data-stage="0"><span>brute force</span><span>9,628 windows · ~12 min</span></div>
+        <div class="stage" data-stage="1"><span>global pass</span><span>132 windows · ~13 s</span></div>
+        <div class="stage on" data-stage="2"><span>local + momentum</span><span>~19 windows · 1–2 s</span></div>
+      </div>
+      <p class="muted" style="font-size:.88rem;margin-top:14px">SuperPoint / SuperGlue matching gives 70–150 inliers per match in open terrain, 3–5 in dense cities. Validated on MovingDrone sequences up to 104 frames, with pySLAM visual odometry tracking 15/15 frames; ~5 s per frame on average in simple scenarios.</p>
+      <div class="chips" style="margin-top:10px"><span>SuperPoint</span><span>SuperGlue</span><span>pySLAM</span><span>coarse-to-fine search</span></div>
+    </div>
+  </div>
+  <div class="screen wide subj" data-tag="drone · 1–2 s / frame">
+    <video id="heraldVid" src="herald.mp4" poster="herald-poster.jpg" muted loop playsinline controls preload="none" width="1600" height="900" data-auto aria-label="HERALD analysis run: the app matches each frame, draws the estimated trajectory over the airport satellite map, with the live log in a terminal"></video>
+    <div class="cap">real run · MovingDrone airport1 · per-frame match, estimated trajectory in red, live log in the terminal</div>
+  </div>
+</section>
+
+<section class="ch" id="projects" data-label="side project" data-year="2024–2026">
+  <span class="kicker mono">chapter 5 · after hours</span>
+  <h2>Things I build when nobody asks</h2>
+  <div class="cards subj" id="cards" data-tag="side projects · 4">
+    <article class="card"><span class="mono">May 2026 · 3rd / 27</span><h3>UAV Interceptor</h3><p>Direction finding with three ESP32 antennas and a Kalman filter, plus a 3D simulation of the sensor-to-actuator loop.</p><div class="chips"><span>ESP32</span><span>Kalman</span><span>Three.js</span></div></article>
+    <article class="card"><span class="mono">Apr 2026 · Big Berlin Hack</span><h3>Tectum</h3><p>AI solar planning platform for installers: customer intake, 3D roof planning and AI offer generation, built on data from 1,200+ projects. Won the Aikido Security Prize (most secure app, 158 teams) and led to contact from Reonic.</p><div class="chips"><span>React</span><span>Three.js</span><span>FastAPI</span></div><a class="more mono" href="https://github.com/RedHoven/tectum" target="_blank" rel="noopener">repo ↗</a></article>
+    <article class="card"><span class="mono">2026</span><h3>Multi-agent research system</h3><p>Agents that find hackathons and fellowships with verified deadlines and draft personalized outreach.</p><div class="chips"><span>CrewAI</span><span>LLM orchestration</span></div></article>
+    <article class="card"><span class="mono">Kaggle</span><h3>Top 30% on average</h3><p>Five competitions with 2,000 to 5,000+ participants each: ensembles, cross-validation, and one leakage bug I won't repeat.</p><div class="chips"><span>XGBoost</span><span>ensembles</span></div><a class="more mono" href="https://www.kaggle.com/eduardopane" target="_blank" rel="noopener">Kaggle profile ↗</a></article>
+  </div>
+</section>
+
+<section class="ch" id="games" data-label="game agent" data-year="2024–2026">
+  <span class="kicker mono">chapter 6 · games</span>
+  <h2>Machine learning, tested in games</h2>
+  <p>Games give instant feedback and an honest score. I use them to run detection, reinforcement learning and evolutionary methods end to end, from pixels to actions.</p>
+  <div class="bento subj" data-tag="game agents · 6">
+    <div class="bl">
+      <figure class="gt t1" data-g="1"><video src="g-hollow.mp4" poster="g-hollow.jpg" muted loop playsinline controls preload="none" width="1280" height="720" data-auto aria-label="Hollow Knight agent fighting Nightmare King Grimm, with YOLO detection boxes and the agent's decision panel"></video><span class="tag">01 · hollow knight · DQN</span></figure>
+      <figure class="gt" data-g="2"><video src="g-mario.mp4" poster="g-mario.jpg" muted loop playsinline controls preload="none" width="960" height="540" data-auto aria-label="Super Mario Bros agent playing several levels, recorded with the training console"></video><span class="tag">02 · mario · DQN / PPO</span></figure>
+      <figure class="gt" data-g="3"><video src="g-pong.mp4" poster="g-pong.jpg" muted loop playsinline controls preload="none" width="960" height="540" data-auto aria-label="Pong AI dashboard: paddle AI and ball AI training in turns with deep Q-learning"></video><span class="tag">03 · pong · 2 agents</span></figure>
+    </div>
+    <figure class="gt tall" data-g="4"><video src="g-arduino.mp4" poster="g-arduino.jpg" muted loop playsinline controls preload="none" width="540" height="960" data-auto aria-label="Arduino Mega on a breadboard with a small OLED display running a Q-learning agent"></video><span class="tag">04 · arduino · 8 KB</span></figure>
+    <div class="brow">
+      <figure class="gt" data-g="5"><video src="g-snake.mp4" poster="g-snake.jpg" muted loop playsinline controls preload="none" width="960" height="540" data-auto aria-label="Snake controlled by an evolved agent at generation 573"></video><span class="tag">05 · snake · gen 573</span></figure>
+      <figure class="gt" data-g="6"><video src="g-flappy.mp4" poster="g-flappy.jpg" muted loop playsinline controls preload="none" width="960" height="540" data-auto aria-label="Flappy Bird in augmented reality over a webcam feed, controlled by holding up a phone"></video><span class="tag">06 · flappy AR · phone</span></figure>
+    </div>
+  </div>
+  <ol class="legend">
+    <li data-g="1"><span class="n mono">01</span><div><h3><small>in development</small>Hollow Knight AI</h3><p>A DQN agent trained against the Nightmare King Grimm boss, seeing the game through a YOLOv8 pipeline at 30 FPS, tracking player, boss animations and projectiles. Experience replay, target networks and reward shaping across 50+ parameters. <a class="more mono" href="https://github.com/Eddicpp/GENESI" target="_blank" rel="noopener">repo ↗</a></p><div class="chips"><span>PyTorch</span><span>YOLOv8</span><span>10k+ LOC</span></div></div></li>
+    <li data-g="2"><span class="n mono">02</span><div><h3>Super Mario Bros RL</h3><p>DQN, Double DQN and PPO with curriculum learning across all 32 levels, plus a genetic algorithm with live browser visualization. <a class="more mono" href="https://github.com/Eddicpp/mario-rl" target="_blank" rel="noopener">repo ↗</a></p><div class="chips"><span>PyTorch</span><span>PPO</span><span>curriculum</span></div></div></li>
+    <li data-g="3"><span class="n mono">03</span><div><h3>Pong, two learners</h3><p>Multi-agent DQN: the paddle and the ball are both agents, taking turns as the current learner.</p><div class="chips"><span>DQN</span><span>multi-agent</span></div></div></li>
+    <li data-g="4"><span class="n mono">04</span><div><h3>Q-learning on a microcontroller</h3><p>Tabular Q-learning running on an Arduino Mega with 8 KB of RAM, playing on a small OLED display.</p><div class="chips"><span>C++</span><span>Q-learning</span></div></div></li>
+    <li data-g="5"><span class="n mono">05</span><div><h3>Snake, evolved</h3><p>A genetic algorithm evolves a 6-layer network controller. Shown here at generation 573.</p><div class="chips"><span>genetic algorithm</span></div></div></li>
+    <li data-g="6"><span class="n mono">06</span><div><h3>Flappy Bird AR</h3><p>The webcam feed is the level. A phone held up to the camera is detected with YOLOv8 and becomes the controller.</p><div class="chips"><span>YOLOv8</span><span>OpenCV</span></div></div></li>
+  </ol>
+</section>
+
+<section class="ch" id="awards" data-label="milestone" data-year="2026">
+  <div class="split">
+    <div>
+      <span class="kicker mono">chapter 7 · the log</span>
+      <h2>Recognition along the way</h2>
+      <p class="muted">Hackathons taught me to ship under pressure. These are the ones that ended on a stage.</p>
+      <div class="kick">
+        <img src="kickstart.png" alt="Kickstart" width="367" height="107" loading="lazy">
+        <p><b>Fellow, Kickstart Global.</b> Selected for the Kickstart Global fellowship, Autumn 2026.</p>
+      </div>
+    </div>
+    <ol class="log subj" id="log" data-tag="log · 8">
+      <li><span class="mono muted">Mar 2026</span><b>1st place, “I Nuovi Dispositivi del Futuro”</b>Elevator Innovation Hub Vicenza, with LIMEN · also 2nd in the social challenge · internship offer</li>
+      <li><span class="mono muted">Apr 2026</span><b>Aikido Security Prize, Big Berlin Hack (Tech Europe)</b>Tectum, Most Secure App among 158 teams · contacted by Reonic</li>
+      <li><span class="mono muted">Apr 2026</span><b>Top 6 of 16, Zamperla R&amp;D challenge</b>Talent Week</li>
+      <li><span class="mono muted">May 2026</span><b>3rd of 27 teams, Defense-Tech Hackathon (EDTH Prague)</b>UAV Interceptor, 200 participants · <a class="more mono" href="https://www.youtube.com/watch?v=91IUKRzPzNA" target="_blank" rel="noopener">demo video ↗</a></li>
+      <li><span class="mono muted">Jun 2026 – now</span><b>Ambassador, Hackathon Hub</b></li>
+      <li><span class="mono muted">Autumn 2026</span><b>Fellow, Kickstart Global</b></li>
+      <li><span class="mono muted">Oct 2026</span><b>1st place, Startup Generation Challenge</b>RelazionEXPO Verona, with Economics Network</li>
+      <li><span class="mono muted">Oct – Dec 2026</span><b>Selected, Horizon Business Game (2nd edition)</b>60 of 370 applicants · in progress</li>
+    </ol>
+  </div>
+  <div class="floor">
+    <p class="mono muted" style="margin:0">on the floor · with my teams</p>
+    <div class="frow">
+      <figure class="ph" style="--ar:0.6764"><img src="team-berlin.jpg" alt="Eduardo with his team in front of the Big Berlin Hack poster wall, holding the Aikido Security Prize" width="900" height="1331" loading="lazy" decoding="async"><span class="tag">Apr 2026 · Big Berlin Hack · Tectum · security prize</span></figure>
+      <figure class="ph" style="--ar:1.3333"><img src="team-relazionexpo.jpg" alt="Eduardo's team at RelazionEXPO in Verona with the 1st-place award of the Startup Generation Challenge" width="1400" height="1050" loading="lazy" decoding="async"><span class="tag">Oct 2026 · 1st place · Startup Generation Challenge</span></figure>
+    </div>
+    <div class="frow">
+      <figure class="ph" style="--ar:1.7767"><img src="team-talentweek.jpg" alt="Eduardo working at a shared table with other participants and laptops during Talent Week, Zamperla R&amp;D challenge" width="1400" height="788" loading="lazy" decoding="async"><span class="tag">Apr 2026 · Talent Week · Zamperla R&amp;D · top 6/16</span></figure>
+      <figure class="ph" style="--ar:1.5389"><video src="edth-prague.mp4" poster="edth-prague.jpg" muted loop playsinline controls preload="none" width="554" height="360" data-auto data-keep aria-label="UAV Interceptor demo shown at EDTH Prague 2026: radar view of incoming targets and 3D interceptor simulation"></video><span class="tag">May 2026 · 3rd / 27 · EDTH Prague · demo</span><a class="ytl mono" href="https://www.youtube.com/watch?v=91IUKRzPzNA" target="_blank" rel="noopener">YouTube ↗</a></figure>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="zeiss" data-label="next frame" data-year="2027">
+  <span class="kicker mono">chapter 8 · next frame</span>
+  <div class="iris subj" id="iris" data-tag="ZEISS · Mar–Aug 2027">
+    <span class="mono muted">Mar 2027 → Aug 2027</span>
+    <div class="big" style="margin-top:10px">ZEISS</div>
+    <p style="font-size:var(--s1);margin:14px 0 0">Next: a six-month internship at ZEISS headquarters in Oberkochen, Germany, during my Master's in AI.</p>
+    <div class="zrow mono muted"><span>Oberkochen, DE</span><span>6 months</span><span>optics · imaging · AI</span></div>
+  </div>
+</section>
+
+<section class="ch" id="contact" data-label="you" data-year="now" style="min-height:auto">
+  <h2>If you work on vision, robotics or edge AI, let's talk</h2>
+  <div class="contact subj" data-tag="contact · open">
+    <span class="email" id="mail">eduardo.pane04@gmail.com</span>
+    <button type="button" class="btn" id="copy">Copy email</button>
+    <a class="btn" href="https://www.linkedin.com/in/eduardo-pane-467702293" target="_blank" rel="noopener">LinkedIn ↗</a>
+    <a class="btn primary" href="Eduardo_Pane_CV.pdf" target="_blank" rel="noopener">CV (PDF) ↗</a>
+    <a class="btn" href="https://github.com/Eddicpp" target="_blank" rel="noopener">GitHub ↗</a>
+    <a class="btn" href="https://www.kaggle.com/eduardopane" target="_blank" rel="noopener">Kaggle ↗</a>
+  </div>
+  <p class="avail mono"><i></i>open to internships &amp; M.Sc. thesis from Sep 2027 · open to relocation · Italian (native), English (B2)</p>
+</section>
+
+<footer class="mono">© 2026 Eduardo Pane · Padova</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function(){
+  document.documentElement.lang='en'; document.documentElement.classList.add('js');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var css = getComputedStyle(document.documentElement);
+  function tok(n){ return css.getPropertyValue(n).trim(); }
+
+
+  /* ---------- video: load and play only when visible ---------- */
+  if('IntersectionObserver' in window && !reduce){
+    var vio=new IntersectionObserver(function(es){ es.forEach(function(e){
+      var v=e.target;
+      if(e.isIntersecting){ var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){ v.setAttribute('controls',''); }); } else v.pause();
+    }); },{threshold:.25});
+    document.querySelectorAll('video[data-auto]').forEach(function(v){ if(v.id!=='heraldVid' && !v.hasAttribute('data-keep')) v.removeAttribute('controls'); vio.observe(v); });
+  }
+
+  /* ---------- HUD + progress ---------- */
+  var hudL=document.getElementById('hudLabel'), hudY=document.getElementById('hudYear'), hudF=document.getElementById('hudFrame'), prog=document.getElementById('prog');
+  var lastY=scrollY, dirDown=true;
+  function onScroll(){
+    if(scrollY!==lastY){ dirDown=scrollY>lastY; lastY=scrollY; }
+    var h=document.documentElement.scrollHeight-window.innerHeight, p=h>0?Math.min(1,scrollY/h):0;
+    prog.style.transform='scaleX('+p+')';
+    hudF.textContent='f.'+String(1+Math.round(p*2400)).padStart(4,'0');
+  }
+  /* ---------- chapter change: a pixel wave sweeps the frame, then reveals the next chapter ---------- */
+  var wv=document.getElementById('wave'), wctx=wv.getContext('2d'), wRun=0;
+  function wave(kind,back,label,onMid,top){
+    if(reduce) return;
+    var W=innerWidth, H=innerHeight; wv.width=W; wv.height=H;
+    var C=W<600?18:26, cols=Math.ceil(W/C), rows=Math.ceil(H/C), n=cols*rows, J=.12, D=W<600?700:820;
+    var jit=new Float32Array(n), dist=new Float32Array(n);
+    for(var y=0;y<rows;y++)for(var x=0;x<cols;x++){
+      var i=y*cols+x, xn=(x+.5)/cols, yn=(y+.5)/rows, d;
+      if(kind===0) d=1-xn+.05*Math.sin(yn*Math.PI*3);          // right -> left, wave-shaped front
+      else if(kind===1) d=(1-xn)*.62+yn*.38+.03*Math.sin(xn*Math.PI*4); // diagonal, from top-right
+      else d=yn+.05*Math.sin(xn*Math.PI*2.5);                   // pixel rain, top -> bottom
+      if(back) d=1-d;                         // scrolling up: reverse the sweep
+      dist[i]=d; jit[i]=Math.random();
+    }
+    var bg=tok('--bg'), box=tok('--box'), ink=tok('--muted'), t0=performance.now(), id=++wRun, mid=false;
+    wv.style.zIndex=top?'45':''; wv.style.display='block';
+    function frame(now){
+      if(id!==wRun) return;
+      var t=Math.min(1,(now-t0)/D);
+      var a=Math.min(1,t/.42)*(1+J), b=Math.max(0,(t-.52)/.48)*(1+J);
+      wctx.clearRect(0,0,W,H);
+      for(var i=0;i<n;i++){
+        var k=dist[i]+jit[i]*J;
+        if(k<a && k>=b){
+          var e=Math.min(a<1+J?a-k:9, b>0?k-b:9), px=(i%cols)*C, py=((i/cols)|0)*C;
+          if(e<.035){ wctx.globalAlpha=1; wctx.fillStyle=box; wctx.fillRect(px,py,C-2,C-2); }
+          else if(e<.08){ wctx.fillStyle=bg; wctx.globalAlpha=1; wctx.fillRect(px,py,C,C); wctx.fillStyle=box; wctx.globalAlpha=.4; wctx.fillRect(px+3,py+3,C-6,C-6); }
+          else { wctx.globalAlpha=1; wctx.fillStyle=bg; wctx.fillRect(px,py,C,C); if(jit[i]>.994){ wctx.fillStyle=box; wctx.globalAlpha=.55; wctx.fillRect(px+C/2-2,py+C/2-2,4,4); } }
+        }
+      }
+      wctx.globalAlpha=1;
+      if(t>.36 && t<.6 && label){
+        wctx.font='500 13px "IBM Plex Mono", ui-monospace, monospace'; wctx.textAlign='center'; wctx.textBaseline='middle';
+        var tw=wctx.measureText(label).width+28, cx=W/2, cy=H/2;
+        wctx.strokeStyle=box; wctx.lineWidth=1.5; wctx.strokeRect(cx-tw/2,cy-16,tw,32);
+        wctx.fillStyle=box; wctx.fillRect(cx-tw/2-5,cy-21,9,9); wctx.fillRect(cx+tw/2-4,cy+12,9,9);
+        wctx.fillStyle=ink; wctx.fillText(label,cx,cy);
+      }
+      if(!mid && t>=.47){ mid=true; if(onMid) onMid(); }
+      if(t<1) requestAnimationFrame(frame); else { wctx.clearRect(0,0,W,H); wv.style.display='none'; wv.style.zIndex=''; }
+    }
+    requestAnimationFrame(frame);
+  }
+  window.__wave=function(cb){ if(reduce){ cb(); return; } wave(0,false,'',cb,true); };
+  var chList=[].slice.call(document.querySelectorAll('[data-label]')), curCh=null, armed=false;
+  setTimeout(function(){ armed=true; },900);
+
+  if('IntersectionObserver' in window){
+    var GL='▚▞▖▗▘▝#/<>01', scr=0;
+    function scramble(el,txt){
+      if(reduce){ el.textContent=txt; return; }
+      clearInterval(scr); var n=0;
+      scr=setInterval(function(){ n++; var out='';
+        for(var k=0;k<txt.length;k++) out+= k < n*txt.length/7 ? txt[k] : GL[(Math.random()*GL.length)|0];
+        el.textContent=out; if(n>=7){ clearInterval(scr); el.textContent=txt; } },35);
+    }
+    var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting && e.target!==curCh){ curCh=e.target; scramble(hudL,e.target.dataset.label); hudY.textContent=e.target.dataset.year; } }); },{rootMargin:'-45% 0px -45% 0px'});
+    document.querySelectorAll('[data-label]').forEach(function(c){ io.observe(c); });
+  }
+
+  /* ---------- games: legend item highlights its tile and back ---------- */
+  document.querySelectorAll('[data-g]').forEach(function(el){
+    function set(on){ document.querySelectorAll('[data-g="'+el.dataset.g+'"]').forEach(function(x){ x.classList.toggle('hi',on); }); }
+    el.addEventListener('mouseenter',function(){ set(true); }); el.addEventListener('mouseleave',function(){ set(false); });
+  });
+
+  /* ---------- copy ---------- */
+  var btn=document.getElementById('copy');
+  btn.addEventListener('click',function(){
+    var el=document.getElementById('mail');
+    function fb(){ var r=document.createRange(); r.selectNodeContents(el); var s=getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent='Selected, press Ctrl/⌘+C'; }
+    try{ navigator.clipboard.writeText(el.textContent).then(function(){ btn.textContent='Copied'; },fb); }catch(e){ fb(); }
+    setTimeout(function(){ btn.textContent='Copy email'; },2500);
+  });
+
+  /* ---------- tracker: one detection box handed off between chapter subjects ---------- */
+  var trk=document.getElementById('tracker'), trkTag=document.getElementById('trkTag');
+  var subs=[].slice.call(document.querySelectorAll('.subj'));
+  var chs=[].slice.call(document.querySelectorAll('.ch:not(#contact)'));
+  var ticking=false, lastTag='', wasSeek=false;
+  function lockPulse(){
+    if(!window.gsap) return;
+    gsap.fromTo('#tbox',{scale:1.14},{scale:1,duration:.45,ease:'expo.out',overwrite:'auto'});
+    gsap.fromTo('#tscan',{top:'0%',opacity:.9},{top:'100%',opacity:0,duration:.6,ease:'power1.inOut',overwrite:'auto'});
+    gsap.fromTo('#trkTag',{backgroundColor:'#F2EEE9'},{backgroundColor:'#FF7A1A',duration:.5,overwrite:'auto'});
+  }
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function place(){
+    ticking=false; onScroll();
+    if(!trk.offsetParent && getComputedStyle(trk).display==='none') return;
+    var rem=document.documentElement.scrollHeight-innerHeight-scrollY, A=innerHeight*(.5+.4*Math.max(0,1-rem/innerHeight)), rs=subs.map(function(el){ return el.getBoundingClientRect(); });
+    var pad=6, cur=null, tag='', seek=false;
+    for(var i=0;i<rs.length;i++){ if(rs[i].top<=A && rs[i].bottom>=A){ cur=rs[i]; tag=subs[i].dataset.tag; break; } }
+    if(!cur){
+      var prev=-1, next=-1;
+      for(var j=0;j<rs.length;j++){ if(rs[j].bottom<A) prev=j; else if(next<0 && rs[j].top>A) next=j; }
+      if(prev<0){ cur=rs[next]; tag=subs[next].dataset.tag; }
+      else if(next<0){ cur=rs[prev]; tag=subs[prev].dataset.tag; }
+      else {
+        var a=rs[prev], b=rs[next], t=(A-a.bottom)/Math.max(1,b.top-a.bottom);
+        t=t*t*(3-2*t);
+        cur={left:lerp(a.left,b.left,t),top:lerp(a.top,b.top,t),width:lerp(a.width,b.width,t),height:lerp(a.height,b.height,t)};
+        seek=t>.12&&t<.88; tag=seek?'re-acquiring…':(t<.5?subs[prev].dataset.tag:subs[next].dataset.tag);
+      }
+    }
+    var p0 = cur===rs[0] && subs[0].id==='face' ? 0 : pad;
+    trk.style.transform='translate('+(cur.left-p0)+'px,'+(cur.top-p0)+'px)';
+    trk.style.width=(cur.width+2*p0)+'px'; trk.style.height=(cur.height+2*p0)+'px';
+    trk.classList.toggle('seek',seek);
+    if(tag!==lastTag){ trkTag.textContent=tag; lastTag=tag; }
+    if(wasSeek && !seek) lockPulse();
+    wasSeek=seek;
+    // exit: a chapter dissolves as it leaves through the top of the frame
+    var cut=innerHeight*.5, ops=chs.map(function(c){ var b=c.getBoundingClientRect().bottom; return b>=cut?1:Math.max(0,b/cut); });
+    chs.forEach(function(c,i){ var o=ops[i]; o=o*o; var v=o>=.999?'':o.toFixed(3); if(c.style.opacity!==v) c.style.opacity=v; });
+  }
+  function req(){ if(!ticking){ ticking=true; requestAnimationFrame(place); } }
+  if(!reduce){ document.documentElement.classList.add('trk'); }
+  addEventListener('scroll',req,{passive:true}); addEventListener('resize',req);
+  place();
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(req);
+  addEventListener('load',req);
+
+  /* ---------- scroll story (GSAP) ---------- */
+  if(reduce || !window.gsap || !window.ScrollTrigger) return;
+  gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.addEventListener('refresh',req);
+  var mm=gsap.matchMedia();
+
+  // hero: detector acquires the face, then the name
+  var tl=gsap.timeline({delay:.15,paused:document.documentElement.classList.contains('intro-on')});
+  tl.from('#tbox',{scale:1.9,opacity:0,duration:1,ease:'expo.out',transformOrigin:'50% 50%'})
+    .fromTo('#scan',{top:'0%',opacity:.9},{top:'100%',opacity:0,duration:.8,ease:'power1.inOut'},'-=.3')
+    .from('.portrait .lm',{scale:0,opacity:0,stagger:.07,duration:.25},'-=.4')
+    .from('#person',{opacity:0,scale:1.08,duration:.6,ease:'power2.out',transformOrigin:'50% 50%'},'-=.2');
+  gsap.to('#portrait img',{scale:1.08,yPercent:-2,ease:'none',scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}});
+  gsap.to('.portrait .lm',{opacity:0,ease:'none',scrollTrigger:{trigger:'.hero',start:'center top',end:'bottom top',scrub:true}});
+  var hl=gsap.timeline({delay:.2,paused:tl.paused()});
+  hl.from('#heroLock .lb',{scale:1.5,opacity:0,duration:1.1,ease:'expo.out'}).from('#heroLock .tag',{opacity:0,y:6,duration:.5},.7);
+  if(tl.paused()) document.addEventListener('intro:done',function(){ tl.play(); hl.play(); ScrollTrigger.refresh(); },{once:true});
+
+  // headings settle in early, fully visible before they reach mid-screen
+  gsap.utils.toArray('.ch:not(.hero) h2, .ch:not(.hero) .kicker').forEach(function(el){
+    gsap.from(el,{y:30,opacity:0,ease:'none',scrollTrigger:{trigger:el,start:'top 95%',end:'top 75%',scrub:true}});
+  });
+
+  // body copy, facts and stages rise in just behind the headings
+  gsap.utils.toArray('.ch:not(.hero) p, .ch:not(.hero) .fact, .stage, .screen, .wrist, .card, .cert, .ph, .kick, .job, .email, .contact .btn').forEach(function(el){
+    gsap.from(el,{y:24,opacity:0,ease:'none',scrollTrigger:{trigger:el,start:'top 97%',end:'top 80%',scrub:true}});
+  });
+
+
+  // limen: the signal travels into the chip
+  var ecg=document.getElementById('ecg'), L=ecg.getTotalLength();
+  gsap.fromTo(ecg,{strokeDasharray:L,strokeDashoffset:L},{strokeDashoffset:0,ease:'none',scrollTrigger:{trigger:'.wrist',start:'top 85%',end:'center 55%',scrub:true}});
+
+  // herald: stages light up in order as the section scrolls through
+  var stages=document.querySelectorAll('.stage');
+  ScrollTrigger.create({trigger:'#stages',start:'top 85%',end:'top 35%',scrub:true,onUpdate:function(st){
+    var k=st.progress<.34?0:(st.progress<.67?1:2); stages.forEach(function(el,i){ el.classList.toggle('on',i===k); }); }});
+  // herald video opens from a thin scanline to full frame
+
+  // games: tiles slide in staggered, legend rows follow
+  gsap.utils.toArray('.gt').forEach(function(el){
+    gsap.from(el,{y:40,opacity:0,scale:.96,ease:'none',scrollTrigger:{trigger:el,start:'top 97%',end:'top 75%',scrub:true}});
+  });
+  gsap.from('.legend li',{y:20,opacity:0,stagger:.1,ease:'none',scrollTrigger:{trigger:'.legend',start:'top 92%',end:'top 60%',scrub:true}});
+
+  // log: entries land on the line, done before the list reaches mid-screen
+  gsap.from('#log li',{x:-24,opacity:0,stagger:.15,ease:'none',scrollTrigger:{trigger:'#log',start:'top 90%',end:'top 55%',scrub:true}});
+
+  // zeiss: the aperture opens, fully open before mid-screen
+  gsap.fromTo('#iris',{clipPath:'circle(4% at 50% 50%)'},{clipPath:'circle(150% at 50% 50%)',ease:'power1.in',scrollTrigger:{trigger:'#zeiss',start:'top 90%',end:'top 40%',scrub:true}});
+})();
+</script>
+
+</body></html>
