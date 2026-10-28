@@ -196,13 +196,16 @@ html.trk #face::before,html.trk #face::after,html.trk #faceTag{display:none}
 /* projects */
 .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin-top:28px}
 .card{background:var(--surface);border:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card-featured{grid-column:1/-1;display:grid;grid-template-columns:1.2fr 1fr;align-items:center;gap:22px}
+.card-featured img{display:block;width:100%;height:auto;border:1px solid var(--line)}
+.card-featured .card-copy{display:flex;flex-direction:column;gap:10px;min-width:0}
 .card h3,.gt h3{font-family:var(--display);font-weight:700;font-size:var(--s1);margin:0;line-height:1.15}
 .card p,.gt p{margin:0;color:var(--muted);font-size:.95rem}
 .card .mono,.gt figcaption>.mono{color:var(--box)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px}
 .chips span{font-family:var(--mono);font-size:.75rem;border:1px solid var(--line);padding:2px 7px}
 @media (max-width:980px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:600px){.cards{grid-template-columns:1fr;gap:14px}}
+@media (max-width:600px){.cards{grid-template-columns:1fr;gap:14px}.card-featured{grid-template-columns:1fr}}
 
 /* games: bento wall at true aspect ratios + numbered legend */
 .bento{display:grid;grid-template-columns:2.066fr 1fr;gap:16px;margin-top:28px}
@@ -490,7 +493,17 @@ footer{padding-block:30px 90px;color:var(--muted)}
 <section class="ch" id="projects" data-label="side project" data-year="2024–2026">
   <span class="kicker mono">chapter 5 · after hours</span>
   <h2>Things I build when nobody asks</h2>
-  <div class="cards subj" id="cards" data-tag="side projects · 4">
+  <div class="cards subj" id="cards" data-tag="side projects · 5">
+    <article class="card card-featured">
+      <img src="591586776-c54e109d-6598-4fb0-b736-f189cac981f1.png" alt="OrbisV impact analysis comparing the IRIS-3 payload before and after a solar panel change, with 3D views and readiness scores" width="2722" height="1706" loading="lazy" decoding="async">
+      <div class="card-copy">
+        <span class="mono">2026 · space systems · proof of concept</span>
+        <h3>OrbisV</h3>
+        <p>A decision-oriented verification and validation platform for optical Earth observation payloads. Connects user needs, requirements and engineering evidence to GO/NO-GO readiness decisions, with 3D visualization and LLM-assisted change-impact analysis.</p>
+        <div class="chips"><span>React</span><span>Three.js</span><span>FastAPI</span><span>Ollama</span></div>
+        <a class="more mono" href="https://github.com/Eddicpp/OrbisV-Decision-Oriented-V-V-Intelligence-Platform" target="_blank" rel="noopener">repo ↗</a>
+      </div>
+    </article>
     <article class="card"><span class="mono">May 2026 · 3rd / 27</span><h3>UAV Interceptor</h3><p>Direction finding with three ESP32 antennas and a Kalman filter, plus a 3D simulation of the sensor-to-actuator loop.</p><div class="chips"><span>ESP32</span><span>Kalman</span><span>Three.js</span></div></article>
     <article class="card"><span class="mono">Apr 2026 · Big Berlin Hack</span><h3>Tectum</h3><p>AI solar planning platform for installers: customer intake, 3D roof planning and AI offer generation, built on data from 1,200+ projects. Won the Aikido Security Prize (most secure app, 158 teams) and led to contact from Reonic.</p><div class="chips"><span>React</span><span>Three.js</span><span>FastAPI</span></div><a class="more mono" href="https://github.com/RedHoven/tectum" target="_blank" rel="noopener">repo ↗</a></article>
     <article class="card"><span class="mono">2026</span><h3>Multi-agent research system</h3><p>Agents that find hackathons and fellowships with verified deadlines and draft personalized outreach.</p><div class="chips"><span>CrewAI</span><span>LLM orchestration</span></div></article>
@@ -535,13 +548,12 @@ footer{padding-block:30px 90px;color:var(--muted)}
         <p><b>Fellow, Kickstart Global.</b> Selected for the Kickstart Global fellowship, Autumn 2026.</p>
       </div>
     </div>
-    <ol class="log subj" id="log" data-tag="log · 8">
+    <ol class="log subj" id="log" data-tag="log · 7">
       <li><span class="mono muted">Mar 2026</span><b>1st place, “I Nuovi Dispositivi del Futuro”</b>Elevator Innovation Hub Vicenza, with LIMEN · also 2nd in the social challenge · internship offer</li>
       <li><span class="mono muted">Apr 2026</span><b>Aikido Security Prize, Big Berlin Hack (Tech Europe)</b>Tectum, Most Secure App among 158 teams · contacted by Reonic</li>
       <li><span class="mono muted">Apr 2026</span><b>Top 6 of 16, Zamperla R&amp;D challenge</b>Talent Week</li>
       <li><span class="mono muted">May 2026</span><b>3rd of 27 teams, Defense-Tech Hackathon (EDTH Prague)</b>UAV Interceptor, 200 participants · <a class="more mono" href="https://www.youtube.com/watch?v=91IUKRzPzNA" target="_blank" rel="noopener">demo video ↗</a></li>
       <li><span class="mono muted">Jun 2026 – now</span><b>Ambassador, Hackathon Hub</b></li>
-      <li><span class="mono muted">Autumn 2026</span><b>Fellow, Kickstart Global</b></li>
       <li><span class="mono muted">Oct 2026</span><b>1st place, Startup Generation Challenge</b>RelazionEXPO Verona, with Economics Network</li>
       <li><span class="mono muted">Oct – Dec 2026</span><b>Selected, Horizon Business Game (2nd edition)</b>60 of 370 applicants · in progress</li>
     </ol>
