@@ -214,6 +214,7 @@ html.trk #face::before,html.trk #face::after,html.trk #faceTag{display:none}
 .bl .t1{grid-column:1/-1}
 .brow{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .gt{position:relative;margin:0;background:var(--bg);border:1px solid var(--line);overflow:hidden;transition:border-color .2s}
+.gt.wide{grid-column:1/-1}
 .gt video{display:block;width:100%;height:auto;max-width:100%}
 .gt.tall video{height:100%;object-fit:cover}
 .gt .tag{left:0;top:0;transform:none;font-size:.72rem;z-index:1}
@@ -515,7 +516,7 @@ footer{padding-block:30px 90px;color:var(--muted)}
   <span class="kicker mono">chapter 6 · games</span>
   <h2>Machine learning, tested in games</h2>
   <p>Games give instant feedback and an honest score. I use them to run detection, reinforcement learning and evolutionary methods end to end, from pixels to actions.</p>
-  <div class="bento subj" data-tag="game agents · 6">
+  <div class="bento subj" data-tag="game agents · 7">
     <div class="bl">
       <figure class="gt t1" data-g="1"><video src="g-hollow.mp4" poster="g-hollow.jpg" muted loop playsinline controls preload="none" width="1280" height="720" data-auto aria-label="Hollow Knight agent fighting Nightmare King Grimm, with YOLO detection boxes and the agent's decision panel"></video><span class="tag">01 · hollow knight · DQN</span></figure>
       <figure class="gt" data-g="2"><video src="g-mario.mp4" poster="g-mario.jpg" muted loop playsinline controls preload="none" width="960" height="540" data-auto aria-label="Super Mario Bros agent playing several levels, recorded with the training console"></video><span class="tag">02 · mario · DQN / PPO</span></figure>
@@ -526,6 +527,7 @@ footer{padding-block:30px 90px;color:var(--muted)}
       <figure class="gt" data-g="5"><video src="g-snake.mp4" poster="g-snake.jpg" muted loop playsinline controls preload="none" width="960" height="540" data-auto aria-label="Snake controlled by an evolved agent at generation 573"></video><span class="tag">05 · snake · gen 573</span></figure>
       <figure class="gt" data-g="6"><video src="g-flappy.mp4" poster="g-flappy.jpg" muted loop playsinline controls preload="none" width="960" height="540" data-auto aria-label="Flappy Bird in augmented reality over a webcam feed, controlled by holding up a phone"></video><span class="tag">06 · flappy AR · phone</span></figure>
     </div>
+    <figure class="gt wide" data-g="7"><video src="01a18179-aeec-730a-801c-a191d8d666f4.mp4" poster="g-race.jpg" muted loop playsinline controls preload="none" width="1920" height="1080" data-auto aria-label="RACE reinforcement learning agent driving autonomously in Trackmania, with training metrics in the terminal"></video><span class="tag">07 · RACE · Trackmania · RL</span></figure>
   </div>
   <ol class="legend">
     <li data-g="1"><span class="n mono">01</span><div><h3><small>in development</small>Hollow Knight AI</h3><p>A DQN agent trained against the Nightmare King Grimm boss, seeing the game through a YOLOv8 pipeline at 30 FPS, tracking player, boss animations and projectiles. Experience replay, target networks and reward shaping across 50+ parameters. <a class="more mono" href="https://github.com/Eddicpp/GENESI" target="_blank" rel="noopener">repo ↗</a></p><div class="chips"><span>PyTorch</span><span>YOLOv8</span><span>10k+ LOC</span></div></div></li>
@@ -534,6 +536,7 @@ footer{padding-block:30px 90px;color:var(--muted)}
     <li data-g="4"><span class="n mono">04</span><div><h3>Q-learning on a microcontroller</h3><p>Tabular Q-learning running on an Arduino Mega with 8 KB of RAM, playing on a small OLED display.</p><div class="chips"><span>C++</span><span>Q-learning</span></div></div></li>
     <li data-g="5"><span class="n mono">05</span><div><h3>Snake, evolved</h3><p>A genetic algorithm evolves a 6-layer network controller. Shown here at generation 573.</p><div class="chips"><span>genetic algorithm</span></div></div></li>
     <li data-g="6"><span class="n mono">06</span><div><h3>Flappy Bird AR</h3><p>The webcam feed is the level. A phone held up to the camera is detected with YOLOv8 and becomes the controller.</p><div class="chips"><span>YOLOv8</span><span>OpenCV</span></div></div></li>
+    <li data-g="7"><span class="n mono">07</span><div><h3>RACE · Trackmania</h3><p>An autonomous driving agent trained with reinforcement learning in Trackmania. The demo shows the agent driving on track alongside live training metrics.</p><div class="chips"><span>reinforcement learning</span><span>autonomous driving</span><span>Trackmania</span></div></div></li>
   </ol>
 </section>
 
