@@ -204,8 +204,19 @@ html.trk #face::before,html.trk #face::after,html.trk #faceTag{display:none}
 .card .mono,.gt figcaption>.mono{color:var(--box)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px}
 .chips span{font-family:var(--mono);font-size:.75rem;border:1px solid var(--line);padding:2px 7px}
+.safy{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(20px,3vw,36px);padding:clamp(22px,3.5vw,36px);border-color:#694021;background:linear-gradient(135deg,#201810,var(--surface) 55%)}
+.safy-copy{display:flex;flex-direction:column;gap:14px;min-width:0}
+.safy h3{font-size:clamp(1.7rem,3vw,2.4rem)}
+.safy .safy-lede{color:var(--ink);font-size:1.04rem}
+.safy-score{display:flex;align-items:baseline;gap:12px;padding:12px 0;border-block:1px solid var(--line)}
+.safy-score strong{font-family:var(--display);font-size:2rem;line-height:1;color:var(--box)}
+.safy-score span{color:var(--muted);font-size:.85rem}
+.safy-media{display:flex;flex-direction:column;gap:9px;min-width:0}
+.safy-media video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#0F172A;border:1px solid var(--line)}
+.safy-media .mono{color:var(--muted);font-size:.72rem}
+.safy-note{font-size:.82rem!important}
 @media (max-width:980px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:600px){.cards{grid-template-columns:1fr;gap:14px}.card-featured{grid-template-columns:1fr}}
+@media (max-width:600px){.cards{grid-template-columns:1fr;gap:14px}.card-featured,.safy{grid-template-columns:1fr}}
 
 /* games: bento wall at true aspect ratios + numbered legend */
 .bento{display:grid;grid-template-columns:2.066fr 1fr;gap:16px;margin-top:28px}
@@ -505,14 +516,26 @@ footer{padding-block:30px 90px;color:var(--muted)}
         <a class="more mono" href="https://github.com/Eddicpp/OrbisV-Decision-Oriented-V-V-Intelligence-Platform" target="_blank" rel="noopener">repo ↗</a>
       </div>
     </article>
-    <article class="card">
-      <span class="mono">13–15 Nov 2026 · Junction · DaVinci's Coding</span>
-      <h3>Safy · AI Safety Glasses</h3>
-      <p>Fall detection with Meta glasses and an iPhone: a 30 Hz IMU stream feeds XGBoost, triggering a burst of up to seven photos for Claude Vision verification. A spoken check-in and 15-second countdown precede an alert to family with the location.</p>
-      <p>I built the backend server, Claude Vision integration, frame selection and Safy UI. The camera is off until a fall trigger; faces are blurred and GPS is used only in an emergency.</p>
-      <p>The complete model detected 14/15 simulated falls (93.3% recall, ROC-AUC 0.973) in leave-one-session-out validation across 17 sessions. This preliminary test involved one subject, falls onto a mattress and 510 seconds of data. A small manual Claude Haiku 5.5 evaluation returned 52/56 correct, 0 wrong and 4 undecided, with 1.42 s median latency; images may have been repeated.</p>
-      <div class="chips"><span>SwiftUI</span><span>Meta DAT SDK</span><span>XGBoost</span><span>Claude Vision</span><span>Modal</span><span>FastAPI</span><span>OpenCV</span><span>React</span></div>
-      <a class="more mono" href="https://github.com/yanivlakhani/davinciscoding_junction2026" target="_blank" rel="noopener">repo ↗</a>
+    <article class="card safy">
+      <div class="safy-copy">
+        <span class="mono">13–15 Nov 2026 · Junction · Meta AI Glasses track</span>
+        <h3>Safy · AI Safety Glasses</h3>
+        <p class="safy-lede">From a fall to help, without an always-on camera.</p>
+        <p>Built with DaVinci's Coding: Meta glasses and an iPhone use 30 Hz motion data and XGBoost to trigger up to seven photos for Claude Vision verification. A spoken check-in and 15-second countdown precede an alert to family with the location.</p>
+        <div class="safy-score"><strong>7.6<span>/10</span></strong><span>project evaluation by Meta tutors</span></div>
+        <p>I worked on the backend, Claude Vision, frame selection and Safy UI. The camera stays off until a fall trigger, faces are blurred and GPS is used only in an emergency.</p>
+        <p class="safy-note">The complete model detected 14/15 simulated falls (93.3% recall, ROC-AUC 0.973) across 17 leave-one-session-out sessions. Preliminary evaluation: one subject, falls onto a mattress and 510 seconds of data. In a small manual Claude Haiku 5.5 evaluation, 52/56 outputs were correct, 0 wrong and 4 undecided; median latency was 1.42 s. Images may have been repeated.</p>
+        <div class="chips"><span>SwiftUI</span><span>Meta DAT SDK</span><span>XGBoost</span><span>Claude Vision</span><span>Modal</span><span>FastAPI</span><span>OpenCV</span><span>React</span></div>
+        <a class="more mono" href="https://github.com/yanivlakhani/davinciscoding_junction2026" target="_blank" rel="noopener">repo ↗</a>
+      </div>
+      <div class="safy-media">
+        <video muted playsinline controls preload="metadata" width="1920" height="1080" aria-label="Safy explainer: from fall detection to an emergency alert">
+          <source src="safy-explainer.webm" type="video/webm">
+          <source src="safy-explainer.mp4" type="video/mp4">
+          Your browser does not support embedded video.
+        </video>
+        <span class="mono">project explainer · 40 s · no audio</span>
+      </div>
     </article>
     <article class="card"><span class="mono">May 2026 · 3rd / 27</span><h3>UAV Interceptor</h3><p>Direction finding with three ESP32 antennas and a Kalman filter, plus a 3D simulation of the sensor-to-actuator loop.</p><div class="chips"><span>ESP32</span><span>Kalman</span><span>Three.js</span></div></article>
     <article class="card"><span class="mono">Apr 2026 · Big Berlin Hack</span><h3>Tectum</h3><p>AI solar planning platform for installers: customer intake, 3D roof planning and AI offer generation, built on data from 1,200+ projects. Won the Aikido Security Prize (most secure app, 158 teams) and led to contact from Reonic.</p><div class="chips"><span>React</span><span>Three.js</span><span>FastAPI</span></div><a class="more mono" href="https://github.com/RedHoven/tectum" target="_blank" rel="noopener">repo ↗</a></article>
